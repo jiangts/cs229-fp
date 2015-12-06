@@ -78,20 +78,19 @@ labels = label
 
 from sknn.mlp import Classifier, Layer
 
-train_set = np.matrix(train_set)
-labels = np.matrix(labels)
-
 nn = Classifier(
     layers=[
+        Layer("Maxout", units=100, pieces=2),
+        Layer("Maxout", units=100, pieces=2),
         Layer("Maxout", units=100, pieces=2),
         Layer("Softmax")],
     learning_rate=0.001,
     n_iter=100)
-nn.fit(train_set, np.transpose(labels))
+nn.fit(np.matrix(train_set), np.transpose(np.matrix(labels)))
 
 y_pred = np.transpose(nn.predict(np.matrix(train_set)))
 
-print("Number of mislabeled points out of a total %d points : %d"  % (len(train_set) ,(labels != y_pred).sum()))
+print("Number of mislabeled points out of a total %d points : %d"  % (len(train_set), (labels != y_pred).sum()))
 
 labels_num = 26
 
@@ -144,38 +143,56 @@ labels_fail = [0] * labels_num
 labels_appear = [0] * labels_num
 
 
-# for iteration in range(250):
-#   temp_r = np.random.permutation(num_samples);
-# 
-#   combined = zip(matrix, label)
-#   random.shuffle(combined)
-#   matrix[:], label[:] = zip(*combined)
-# 
-#   print("\nTraining != Testing Samples")
-#   num_training = int(round(0.9*num_samples))
-#   num_testing =  num_samples - num_training
-#   train_set = matrix[1:num_training]
-#   train_labels = labels[1:num_training]
-# 
-#   test_set = matrix[num_training:num_samples]
-#   test_labels = labels[num_training:num_samples]
-# 
-#   y_pred = algo.fit(train_set, train_labels).predict(test_set)
-# 
-#   print("Number of mislabeled points out of a total %d points : %d",  % (len(test_set) ,(test_labels != y_pred).sum()))
-# 
-#   for (pred,act) in zip(y_pred,test_labels):
-#     if act!=pred and act=='z':
-#       print(act,pred)
-# 
-#   denom = np.array([0]*labels_num, dtype=np.float)
-#   num = np.array([0]*labels_num, dtype=np.float)
-#   for i in range(len(test_labels)):
-#     letter_index = ord(letters[ord(test_labels[i])-ord('a')])-ord('a')
-#     denom[letter_index] += 1
-#     if letters[ord(test_labels[i])-ord('a')]!=letters[ord(y_pred[i])-ord('a')]:
-#       labels_fail[letter_index] += 1	
-#     labels_appear[letter_index] += 1
+for iteration in range(250):
+  temp_r = np.random.permutation(num_samples);
+
+  combined = zip(matrix, label)
+  random.shuffle(combined)
+  matrix[:], label[:] = zip(*combined)
+
+  print("\nTraining != Testing Samples")
+  num_training = int(round(0.8*num_samples))
+  num_testing =  num_samples - num_training
+  train_set = matrix[1:num_training]
+  train_labels = labels[1:num_training]
+
+  test_set = matrix[num_training:num_samples]
+  test_labels = labels[num_training:num_samples]
+
+
+  nn2 = Classifier(
+      layers=[
+        Layer("Maxout", units=100, pieces=2),
+        Layer("Maxout", units=100, pieces=2),
+        Layer("Maxout", units=100, pieces=2),
+        Layer("Maxout", units=100, pieces=2),
+        Layer("Maxout", units=100, pieces=2),
+        Layer("Softmax")],
+      learning_rate=0.001,
+      n_iter=100)
+  nn2.fit(np.matrix(train_set), np.transpose(np.matrix(train_labels)))
+  
+  y_pred = nn2.predict(np.matrix(test_set))
+
+  # y_pred = algo.fit(train_set, train_labels).predict(test_set)
+
+  print("Number of mislabeled points out of a total %d points : %d"  % (len(test_set), (test_labels != np.transpose(y_pred)).sum()))
+
+  for (pred,act) in zip(y_pred,test_labels):
+    if act!=pred and act=='z':
+      print(act,pred)
+
+  # test_labels = list(test_labels)
+  y_pred = np.transpose(y_pred).tolist()[0]
+
+  denom = np.array([0]*labels_num, dtype=np.float)
+  num = np.array([0]*labels_num, dtype=np.float)
+  for i in range(len(test_labels)):
+    letter_index = ord(letters[ord(test_labels[i])-ord('a')])-ord('a')
+    denom[letter_index] += 1
+    if letters[ord(test_labels[i])-ord('a')]!=letters[ord(y_pred[i])-ord('a')]:
+      labels_fail[letter_index] += 1	
+    labels_appear[letter_index] += 1
 
 labels_appear = [1 if x==0 else x for x in labels_appear]
 
